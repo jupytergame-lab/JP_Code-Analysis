@@ -180,13 +180,17 @@ int main() {
     const Font& d = (fontBody.texture.id  != 0) ? fontBody  : GetFontDefault();
 
     // --- LANGUAGE DROPDOWN --- //
-    const char* langs[]  = {(const char*)"C++", (const char*)"Java", (const char*)"Python", (const char*)"C"};
-    const int   langCount = 4;
+    const char* langs[]  = {
+        (const char*)"C++",
+        (const char*)"Java"
+    };
+
+    const int   langCount = 2;
     int  selectedLang  = -1;
     bool dropdownOpen  = false;
 
     Rectangle dropdownBtn = {20, 130, 200, 32};
-    Rectangle dropdownOptions[4];
+    Rectangle dropdownOptions[2];
     for (int i = 0; i < langCount; i++)
         dropdownOptions[i] = {20, 162.0f + i * 30.0f, 200, 30};
 
@@ -413,4 +417,4 @@ int main() {
     return 0;
 }
 
-// WRITTEN BY JUPYTER, 2026 
+// WRITTEN BY JUPYTER, 2026 (V0.4)
