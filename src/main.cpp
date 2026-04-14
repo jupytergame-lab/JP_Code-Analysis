@@ -209,7 +209,7 @@ void AnalyzeCode(const char* filePath, std::vector<Metric>& out, std::string& er
 
 int main() {
 
-    InitWindow(screenWidth, screenHeight, "JP Code Analysis");
+    InitWindow(screenWidth, screenHeight, "JCAT");
     SetTargetFPS(60);
 
     // Fonts
@@ -339,7 +339,7 @@ int main() {
         ClearBackground(BG_COLOR);
 
         // ── HEADER ──
-        DrawTextEx(t, "JP Code Analysis", {20, 20}, 26, 2, TEXT_PRIMARY);
+        DrawTextEx(t, "JCAT", {20, 20}, 26, 2, TEXT_PRIMARY);
         DrawTextEx(d, "Analyze source files and generate code metrics.", {20, 58}, 15, 1, TEXT_MUTED);
         DrawLineEx({20, 94}, {580, 94}, 1, BORDER_DIM);
 
@@ -476,4 +476,4 @@ int main() {
 
 
 
-// WRITTEN BY JUPYTER, 2026 (V0.6)
+// JCAT - Jupyter's Code Analysis Tool, 2026 (V0.6)
