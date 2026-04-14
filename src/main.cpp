@@ -58,7 +58,7 @@ struct MetricAnimation {
 const int screenWidth  = 600;
 const int screenHeight = 860;
 
-#define MAX_METRICS 30
+#define MAX_METRICS 40
 
 // --- COLORS --- //
 
@@ -103,7 +103,7 @@ static void DrawBar(Rectangle r, float fraction, Color fill, Color bg) {
 
 // --- ANALYSIS --- //
 
-/// @brief Full analysis: counts total, code, blank, comment lines, functions
+/// @brief Full analysis: counts total, code, blank, comment lines, functions, and file size
 void AnalyzeCode(const char* filePath, std::vector<Metric>& out, std::string& errMsg) {
     out.clear();
     errMsg.clear();
@@ -113,6 +113,12 @@ void AnalyzeCode(const char* filePath, std::vector<Metric>& out, std::string& er
         errMsg = "Could not open file: " + std::string(filePath);
         return;
     }
+
+    // Get file size
+    file.seekg(0, std::ios::end);
+    long fileSize = file.tellg();
+    file.seekg(0, std::ios::beg);
+    int fileSizeKB = (int)((fileSize + 512) / 1024);  // Convert to KB with rounding
 
     int totalLines    = 0;
     int blankLines    = 0;
@@ -186,6 +192,9 @@ void AnalyzeCode(const char* filePath, std::vector<Metric>& out, std::string& er
 
     // Comment ratio as a pseudo-metric (stored as integer percentage)
     int commentRatio = (totalLines > 0) ? (int)(100.0f * commentLines / totalLines) : 0;
+    
+    // Code density: lines of code per kilobyte
+    int codeDensity = (fileSizeKB > 0) ? (int)(codeLines * 1.0f / fileSizeKB) : 0;
 
     out.push_back({"Total Lines",    totalLines,    TEXT_PRIMARY, "", 0, 0.0f});
     out.push_back({"Code Lines",     codeLines,     ACCENT_BLUE,  "", 0, 0.0f});
@@ -193,6 +202,8 @@ void AnalyzeCode(const char* filePath, std::vector<Metric>& out, std::string& er
     out.push_back({"Blank Lines",    blankLines,    TEXT_MUTED,   "", 0, 0.0f});
     out.push_back({"Functions",      functionCount, ACCENT_ORANGE,"", 0, 0.0f});
     out.push_back({"Comment Ratio",  commentRatio,  ACCENT_GREEN, "%", 0, 0.0f});
+    out.push_back({"File Size",      fileSizeKB,    ACCENT_BLUE,  "KB", 0, 0.0f});
+    out.push_back({"Code Density",   codeDensity,   Color{200, 150, 100, 255}, "loc/KB", 0, 0.0f});
 }
 
 
@@ -463,4 +474,6 @@ int main() {
     return 0;
 }
 
-// WRITTEN BY JUPYTER, 2026 (V0.4)
+
+
+// WRITTEN BY JUPYTER, 2026 (V0.6)
