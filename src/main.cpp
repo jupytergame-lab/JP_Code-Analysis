@@ -20,6 +20,37 @@ struct Metric {
     int value;
     Color color;
     std::string unit; // optional suffix (e.g. "%")
+    int displayValue;  // Current animated display value
+    float animProgress;  // Animation progress (0.0 to 1.0)
+};
+
+/// @struct MetricAnimation - Tracks animation timing
+struct MetricAnimation {
+    bool active;
+    float duration;  // Total animation duration in seconds
+    float elapsed;   // Time elapsed in current animation
+    
+    MetricAnimation() : active(false), duration(0.6f), elapsed(0.0f) {}
+    
+    void Start() {
+        active = true;
+        elapsed = 0.0f;
+    }
+    
+    void Update(float deltaTime) {
+        if (active) {
+            elapsed += deltaTime;
+            if (elapsed >= duration) {
+                active = false;
+                elapsed = duration;
+            }
+        }
+    }
+    
+    float GetProgress() const {
+        if (duration <= 0) return 1.0f;
+        return std::min(elapsed / duration, 1.0f);
+    }
 };
 
 // --- CONSTANTS --- //
@@ -51,6 +82,7 @@ enum AnalyzeState { STATE_IDLE, STATE_ANALYZING, STATE_DONE, STATE_ERROR };
 AnalyzeState analyzeState = STATE_IDLE;
 std::string errorMessage;
 std::vector<Metric> metrics;
+MetricAnimation metricAnim;
 
 // --- HELPERS --- //
 
@@ -155,12 +187,12 @@ void AnalyzeCode(const char* filePath, std::vector<Metric>& out, std::string& er
     // Comment ratio as a pseudo-metric (stored as integer percentage)
     int commentRatio = (totalLines > 0) ? (int)(100.0f * commentLines / totalLines) : 0;
 
-    out.push_back({"Total Lines",    totalLines,    TEXT_PRIMARY, ""});
-    out.push_back({"Code Lines",     codeLines,     ACCENT_BLUE,  ""});
-    out.push_back({"Comment Lines",  commentLines,  ACCENT_GREEN, ""});
-    out.push_back({"Blank Lines",    blankLines,    TEXT_MUTED,   ""});
-    out.push_back({"Functions",      functionCount, ACCENT_ORANGE,""});
-    out.push_back({"Comment Ratio",  commentRatio,  ACCENT_GREEN, "%"});
+    out.push_back({"Total Lines",    totalLines,    TEXT_PRIMARY, "", 0, 0.0f});
+    out.push_back({"Code Lines",     codeLines,     ACCENT_BLUE,  "", 0, 0.0f});
+    out.push_back({"Comment Lines",  commentLines,  ACCENT_GREEN, "", 0, 0.0f});
+    out.push_back({"Blank Lines",    blankLines,    TEXT_MUTED,   "", 0, 0.0f});
+    out.push_back({"Functions",      functionCount, ACCENT_ORANGE,"", 0, 0.0f});
+    out.push_back({"Comment Ratio",  commentRatio,  ACCENT_GREEN, "%", 0, 0.0f});
 }
 
 
@@ -249,6 +281,9 @@ int main() {
                     AnalyzeCode(filePath, metrics, errorMessage);
 
                     analyzeState = errorMessage.empty() ? STATE_DONE : STATE_ERROR;
+                    if (analyzeState == STATE_DONE) {
+                        metricAnim.Start();  // Start animation when analysis completes
+                    }
                 }
             }
         }
@@ -275,6 +310,17 @@ int main() {
             // Reset analysis if path changes
             if (analyzeState == STATE_DONE || analyzeState == STATE_ERROR)
                 analyzeState = STATE_IDLE;
+        }
+
+        // --- UPDATE ANIMATIONS --- //
+        metricAnim.Update(GetFrameTime());
+        if (analyzeState == STATE_DONE) {
+            float progress = metricAnim.GetProgress();
+            for (int i = 0; i < (int)metrics.size(); i++) {
+                int targetVal = metrics[i].value;
+                metrics[i].displayValue = (int)(targetVal * progress);
+                metrics[i].animProgress = progress;
+            }
         }
 
         // ---- DRAW ---- //
@@ -385,19 +431,19 @@ int main() {
                 // Metric name
                 DrawTextEx(d, metrics[i].name.c_str(), {cx + 12, cy + 10}, 13, 1, TEXT_MUTED);
 
-                // Value
-                std::string valStr = std::to_string(metrics[i].value) + metrics[i].unit;
+                // Value (animated)
+                std::string valStr = std::to_string(metrics[i].displayValue) + metrics[i].unit;
                 DrawTextEx(d, valStr.c_str(), {cx + 12, cy + 28}, 22, 1, metrics[i].color);
 
                 // Progress bar (skip ratio metric — already in %)
                 if (metrics[i].unit.empty()) {
                     Rectangle barBg  = {cx + 12, cy + 56, cardW - 24, 6};
-                    float frac = (float)metrics[i].value / (float)maxVal;
+                    float frac = (float)metrics[i].displayValue / (float)maxVal;
                     DrawBar(barBg, frac, metrics[i].color, Color{45, 45, 45, 255});
                 } else {
                     // For percentage: show bar scaled 0–100
                     Rectangle barBg  = {cx + 12, cy + 56, cardW - 24, 6};
-                    DrawBar(barBg, metrics[i].value / 100.0f, metrics[i].color, Color{45, 45, 45, 255});
+                    DrawBar(barBg, metrics[i].displayValue / 100.0f, metrics[i].color, Color{45, 45, 45, 255});
                 }
             }
         }
