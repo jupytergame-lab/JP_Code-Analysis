@@ -1,6 +1,6 @@
 # JP Code Analysis Tool
 
-A visual code analysis application built with Raylib that provides detailed metrics about your source code files. Analyze C++ and Java files to understand code structure, quality, and composition.
+A visual code analysis application built with Raylib that provides basic information about your source code files. Analyze C++ and Java files to understand code structure, quality, and composition.
 
 ## Features
 
